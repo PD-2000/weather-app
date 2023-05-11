@@ -5,20 +5,21 @@ import ErrorBox from '../ErrorBox/ErrorBox';
 import { useCallback, useState } from 'react';
 
 const WeatherBox = () => {
-  const [weather, setWeather] = useState('');
+  const [weather, setWeather] = useState(null);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleCityChange = useCallback(city => {
+    setWeather(null);
     setPending(true);
-    setError(false);
+    setError(null);
 
-    fetch(`http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=9c7fe393dd73d772ac79d26e31e9e305&units=metric`)
+    fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=9c7fe393dd73d772ac79d26e31e9e305&units=metric`)
       .then(res => {
         if (res.status === 200) {
           return res.json()
             .then(data => {
-              console.log(data);
+              // console.log(data);
               const weatherData = {
                 city: data.name,
                 temp: data.main.temp,
@@ -27,20 +28,25 @@ const WeatherBox = () => {
               };
 
               setWeather(weatherData);
-              setPending(false);
             })
           }
           else
-            setError(true);
+            setError('There is no such city.');
+      })
+      .catch(() => {
+        setError('Unknown error - try again later.');
+      })
+      .finally(() => {
+        setPending(false);
       });
   }, []);
 
   return (
     <section>
       <PickCity action={handleCityChange} />
-      { (weather && !pending) && <WeatherSummary {...weather} /> }
-      { (pending && !error) && <Loader /> }
-      { error && <ErrorBox /> }
+      { weather && <WeatherSummary {...weather} /> }
+      { pending && <Loader /> }
+      { error && <ErrorBox error={error} /> }
     </section>
   )
 };
